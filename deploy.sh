@@ -77,22 +77,35 @@ setup_volumes() {
 download_configs() {
     print_info "准备配置文件..."
     
-    if [ ! -f "Agent_X.zip" ]; then
-        print_warning "请确保 Agent_X.zip 配置文件包已上传到当前目录"
+    # 检查当前目录
+    if [ -f "Agent_X.zip" ]; then
+        CONFIG_PATH="Agent_X.zip"
+        print_info "在当前目录找到配置文件包"
+    # 检查 /root/config/ 目录
+    elif [ -f "/root/config/Agent_X.zip" ]; then
+        CONFIG_PATH="/root/config/Agent_X.zip"
+        print_info "在 /root/config/ 目录找到配置文件包"
+    # 如果都没找到，提示用户
+    else
+        print_warning "未找到 Agent_X.zip 配置文件包"
+        print_warning "已检查当前目录和 /root/config/ 目录"
         print_warning "配置文件包应包含所有算法服务的配置文件"
-        read -p "配置文件是否已准备好？(y/n): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            print_error "请先准备配置文件包后再运行部署脚本"
+        
+        # 询问用户配置文件路径
+        read -p "请输入配置文件包的完整路径 (或按回车使用默认路径 /root/config/Agent_X.zip): " USER_CONFIG_PATH
+        CONFIG_PATH=${USER_CONFIG_PATH:-"/root/config/Agent_X.zip"}
+        
+        if [ ! -f "$CONFIG_PATH" ]; then
+            print_error "找不到配置文件: $CONFIG_PATH"
+            print_error "请确保配置文件存在后再运行部署脚本"
             exit 1
         fi
     fi
     
-    if [ -f "Agent_X.zip" ]; then
-        print_info "解压配置文件包..."
-        unzip -o Agent_X.zip -d ./code_sdk/
-        print_success "配置文件解压完成"
-    fi
+    print_info "使用配置文件: $CONFIG_PATH"
+    print_info "解压配置文件包..."
+    unzip -o "$CONFIG_PATH" -d ./code_sdk/
+    print_success "配置文件解压完成"
 }
 
 # 拉取所有镜像
