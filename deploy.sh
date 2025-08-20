@@ -79,13 +79,44 @@ check_required_ports() {
     if [ ${#ports_in_use[@]} -gt 0 ]; then
         print_warning "The following ports are already in use: ${ports_in_use[*]}"
         print_warning "This may cause conflicts with x-agent services."
-        read -p "Do you want to continue anyway? (y/n): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            print_error "Deployment aborted."
-            exit 1
-        fi
+        print_warning "The script will attempt to clean up existing Docker containers and networks."
     fi
+}
+
+# Function to clean up existing Docker resources
+cleanup_docker_resources() {
+    print_status "Cleaning up existing Docker resources..."
+    
+    # Stop and remove x-agent related containers
+    local containers=(agent-x algorithm-vector algorithm-code-node algorithm-nl2sql)
+    for container in "${containers[@]}"; do
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+            print_status "Stopping and removing container: ${container}"
+            docker stop "${container}" >/dev/null 2>&1 || true
+            docker rm "${container}" >/dev/null 2>&1 || true
+        fi
+    done
+    
+    # Remove x-agent related volumes
+    local volumes=(agent-x-data agent-x-cicd)
+    for volume in "${volumes[@]}"; do
+        if docker volume ls --format '{{.Name}}' | grep -q "^${volume}$"; then
+            print_status "Removing volume: ${volume}"
+            docker volume rm "${volume}" >/dev/null 2>&1 || true
+        fi
+    done
+    
+    # Remove any existing docker-compose stack
+    if [ -f "$WORK_DIR/docker-compose.yml" ]; then
+        print_status "Removing existing docker-compose stack..."
+        docker compose down -v --remove-orphans >/dev/null 2>&1 || true
+    fi
+    
+    # Prune unused networks
+    print_status "Pruning unused Docker networks..."
+    docker network prune -f >/dev/null 2>&1 || true
+    
+    print_success "Docker resources cleaned up successfully."
 }
 
 # Check if script is run with sudo or as root
@@ -146,6 +177,9 @@ check_required_ports
 # Create working directory
 WORK_DIR="$(pwd)"
 print_status "Using working directory: $WORK_DIR"
+
+# Clean up existing Docker resources
+cleanup_docker_resources
 
 # Create docker-compose.yml
 print_status "Creating docker-compose.yml..."
@@ -211,9 +245,15 @@ volumes:
 EOF
 print_success "docker-compose.yml created successfully."
 
+# Create code_sdk directory and subdirectories
+print_status "Creating code_sdk directory structure..."
+mkdir -p "$WORK_DIR/code_sdk/Embedding_model"
+mkdir -p "$WORK_DIR/code_sdk/Code_node"
+mkdir -p "$WORK_DIR/code_sdk/Nl2sql"
+print_success "Directory structure created successfully."
+
 # Extract code_sdk files from Agent_X.zip
 print_status "Extracting code_sdk files from Agent_X.zip..."
-mkdir -p "$WORK_DIR/code_sdk"
 
 if [ -f "$WORK_DIR/config/Agent_X.zip" ]; then
     unzip -o "$WORK_DIR/config/Agent_X.zip" "Embedding_model/*" -d "$WORK_DIR/code_sdk/"
