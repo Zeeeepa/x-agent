@@ -1,309 +1,267 @@
-<p align="center"><img src= "https://dibrain.wenge.com/wg-agent-manage-uat/static/img/logo-new.81fbf2b9.png" alt="x-agent" width="200" /></p>
-<h3 align="center">Open-source platform for building enterprise-grade agents</h3>
-<h3 align="center">​All-in-One Enterprise Agent Development Platform</h3>
-<p align="center">
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html#license-text"><img src="https://img.shields.io/badge/license-GPL3.0-blue" alt="License: GPL v3"></a>
-  <a href="https://github.com/1Panel-dev/maxkb/releases/latest"><img src="https://img.shields.io/badge/release-V1.0.1-blue" alt="Latest release"></a>
-</p>
+# 智川X-Agent 企业智能体开发平台
 
-<hr/>
-<p>
-智川X-Agent是中科闻歌推出的一站式企业智能体开发平台，帮助企业零代码快速构建AI应用。智川X-Agent基于封装大模型、知识库、工作流等复杂技术模块为可视化组件，用户通过简单的拖拽和配置可搭建符合业务需求的AI应用。智川X-Agent平台支持多种大模型（如雅意、文心一言等），提供知识库管理、工作流编排、应用发布等功能，满足政务、金融、媒体等多行业需求，助力企业实现AI应用的极速落地与高效迭代，加速AI普惠化。
-</p>
-<hr/>
-## 快速开始
+智川X-Agent是中科闻歌推出的一站式企业智能体开发平台，帮助企业零代码快速构建AI应用。
 
-通过docker 镜像启动 x-agent:
+## 🚀 平台特性
 
+- **零代码开发**: 通过可视化拖拽组件快速构建AI应用
+- **多模型支持**: 支持雅意、文心一言等多种大模型
+- **完整工作流**: 提供知识库管理、工作流编排、应用发布等功能
+- **行业适配**: 满足政务、金融、媒体等多行业需求
+- **快速部署**: 基于Docker容器化部署，一键启动
+
+## 🏗️ 技术架构
+
+- **前端**: Vue.js
+- **后端**: Java
+- **算法**: Python
+- **数据库**: MySQL
+- **中间件**: Elasticsearch, Redis, MinIO, Nginx
+
+## 📦 一键部署
+
+### 前置要求
+
+- Docker >= 20.10
+- Docker Compose >= 2.0
+- 至少 8GB 内存
+- 至少 50GB 磁盘空间
+
+### 快速开始
+
+1. **克隆项目**
 ```bash
-docker volume create agent-x-data
-docker volume create agent-x-cicd
-docker pull ccr.ccs.tencentyun.com/wenge/agent-x:agent-x_no_bge_250815_05
-docker run  -d --restart=always -p 80:80 -p 443:443 -p 8848:8848 -p 3306:3306 -p 6379:6379 -p 9200:9200 -p 9000:9000 -p 9001:9001 -e IP_ADDR="127.0.0.1:80" -v agent-x-data:/u01/isi -v agent-x-cicd:/app/agent/server  --name agent-x  ccr.ccs.tencentyun.com/wenge/agent-x:agent-x_no_bge_250815_05
-```
-访问管理后台 `http://127.0.0.1:80/wg-agent-manage/#/appmanage` 
-
-- 账号: agent-x
-- 密码: 04p9xa0gAE*%&Op8
-
-
-## 访问 nacos
-> http://127.0.0.1:8848/nacos/
-> - 账号: nacos
-> - 密码: k2j210w5CKKO!&Wh0
-
-## 连接数据 mysql
-> 127.0.0.1:3306
-> - 账号: root
-> - 密码: 2ievD%GBA6
-> - 主库：smart_customer_agent
-
-## 访问minio
-> http://127.0.0.1:9000
-> - 账号: admin
-> - 密码: 6838BHE%%C472
-
-
-## 启动算法服务
-
-```bash
-docker pull ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-mkdir -p /u01/isi/code_sdk
-#下载 算法配置文件包并上传到服务器指定目录，配置文件包在目录：/config/Agent_X.zip
-unzip Agent_X.zip
+git clone https://github.com/Zeeeepa/x-agent.git
+cd x-agent
 ```
 
-### 1.启动向量模型
+2. **准备配置文件**
 ```bash
-docker run -d -v /u01/isi/code_sdk/Embedding_model/config.yml:/app/config.yml -v /u01/isi/code_sdk/Embedding_model/main.py:/app/main.py  -p 10822:8080 ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
+# 确保 Agent_X.zip 配置文件包在当前目录
+# 配置文件包包含所有算法服务的配置文件
 ```
 
-### 2.工作流代码节点
+3. **运行部署脚本**
 ```bash
-docker run -d -v /u01/isi/code_sdk/Code_node/main.py:/app/main.py  -p 1216:8080 ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-### 3.智能问数（NL2SQL）
+4. **访问系统**
+- 管理后台: http://127.0.0.1:80/wg-agent-manage/#/appmanage
+- 账号: `agent-x`
+- 密码: `04p9xa0gAE*%&Op8`
+
+## 🌐 系统访问信息
+
+### 主要应用界面
+| 服务 | 地址 | 账号 | 密码 |
+|------|------|------|------|
+| 管理后台 | http://127.0.0.1:80/wg-agent-manage/#/appmanage | agent-x | 04p9xa0gAE*%&Op8 |
+
+### 系统管理界面
+| 服务 | 地址 | 账号 | 密码 |
+|------|------|------|------|
+| Nacos配置中心 | http://127.0.0.1:8848/nacos/ | nacos | k2j210w5CKKO!&Wh0 |
+| MinIO对象存储 | http://127.0.0.1:9000 | admin | 6838BHE%%C472 |
+
+### 数据库连接
+| 服务 | 地址 | 账号 | 密码 | 备注 |
+|------|------|------|------|------|
+| MySQL | 127.0.0.1:3306 | root | 2ievD%GBA6 | 主库: smart_customer_agent |
+| Redis | 127.0.0.1:6379 | - | - | 无密码 |
+| Elasticsearch | 127.0.0.1:9200 | - | - | 无认证 |
+
+### 算法服务端口
+| 服务 | 端口 | 描述 |
+|------|------|------|
+| 向量模型服务 | 10822 | BGE向量化模型 |
+| 工作流代码节点 | 1216 | 代码执行节点 |
+| 智能问数(NL2SQL) | 1025 | 自然语言转SQL |
+| MCP服务 | 4011 | 模型上下文协议 |
+| MCP NL2SQL | 4016 | MCP SQL查询 |
+| 网页内容爬取 | 9007 | 单页面内容抓取 |
+| 网页截图服务 | 5028 | 网页截图生成 |
+| 重排序服务 | 9098 | 搜索结果重排 |
+| 文档智能解析 | 9099 | 文档内容解析 |
+| 文档切片服务 | 9097 | 文档分块处理 |
+
+## 🛠️ 管理命令
+
+### 服务管理
 ```bash
-docker run -d -v /u01/isi/code_sdk/Nl2sql/config.yaml:/app/config.yaml -v /u01/isi/code_sdk/Nl2sql/main.py:/app/main.py  -p 1025:8080 ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
+# 启动所有服务
+./start.sh
+
+# 停止所有服务
+./stop.sh
+
+# 重启所有服务
+./restart.sh
+
+# 查看服务状态
+./status.sh
+
+# 查看服务日志
+./logs.sh [服务名]
 ```
 
-### 4.MCP
+### Docker Compose 命令
 ```bash
-docker run -d -v /u01/isi/code_sdk/MCP/config.yml:/app/config.yml -v /u01/isi/code_sdk/MCP/main.py:/app/main.py  -p 4011:8080  ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
+# 查看服务状态
+docker-compose ps
+
+# 查看服务日志
+docker-compose logs -f [服务名]
+
+# 重启特定服务
+docker-compose restart [服务名]
+
+# 停止所有服务
+docker-compose down
+
+# 更新服务
+docker-compose pull && docker-compose up -d
 ```
 
-### 5.本地自定义安装 mcp
-```bash
-docker run -d --name algorithm-local-mcp --net host -v /u01/isi/code_sdk/Auto_mcp/config.yml:/app/config.yml -v /u01/isi/code_sdk/Auto_mcp/main.py:/app/main.py  -v  /u01/isi/code_sdk/Auto_mcp/mcp_file:/app/mcp_file ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-```
+## 🔧 配置说明
 
-### 6.MCP_nl2sql
-```bash
-docker run -d -v /u01/isi/code_sdk/mcp_sql/config.yaml:/app/config.yaml -v /u01/isi/code_sdk/mcp_sql/main.py:/app/main.py  -p 4016:8080 ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-```
+### Nacos配置项
+部署完成后，需要在Nacos中配置以下关键参数：
 
-```bash
-docker pull ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_chrome_v2
-```
-
-### 7.单网页内容爬取
-```bash
-docker run -d -v /u01/isi/code_sdk/URL_analysis/config.yml:/app/config.yml -v /u01/isi/code_sdk/URL_analysis/main.py:/app/main.py  -p 9007:8080 ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_chrome_v2
-```
-
-### 8.网页截图
-```bash
-docker run -d -v /u01/isi/code_sdk/URL_to_img/config.yml:/app/config.yml -v /u01/isi/code_sdk/URL_to_img/main.py:/app/main.py  -p 5028:8080 ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_chrome_v2
-```
-
-## yayi算法
-### 9.重排序服务
-```bash
-docker pull ccr.ccs.tencentyun.com/wenge/agent-x:reranker.v1
-docker run -d -p 9098:8080 --restart=always --name reranker ccr.ccs.tencentyun.com/wenge/agent-x:reranker.v1
-```
-
-### 10.文档智能解析
-```bash
-docker pull ccr.ccs.tencentyun.com/wenge/agent-x:contentparse.v4.7
-docker run -d -p 9099:8080 --restart=always  --name content_parse ccr.ccs.tencentyun.com/wenge/agent-x:contentparse.v4.7
-```
-
-### 11.文档切片
-```bash
-docker pull ccr.ccs.tencentyun.com/wenge/agent-x:doc_answer_noes_nosql.v1.2.8-build2503143-encrypted
-docker run -d -p 9097:8080 --restart=always  --name yayi-plugin-doc-answer-250623 ccr.ccs.tencentyun.com/wenge/agent-x:doc_answer_noes_nosql.v1.2.8-build2503143-encrypted
-```
-
----
-> **注意**：如果默认服务的 ip 和端口有变动，请调整对应的配置项！
-### nacos配置项
 ```yaml
 appframe:
   yayi:
-    # 10.文档智能解析
+    # 文档智能解析
     contentparsingnewversion:
-      uri: http://172.17.0.0.1:9099/analysis
-    # 9.重排序服务
+      uri: http://172.17.0.1:9099/analysis
+    # 重排序服务
     rearrange:
-      uri: http://172.17.0.0.1:9098/analysis
-    # 11.文档切片
+      uri: http://172.17.0.1:9098/analysis
+    # 文档切片
     knowledgesplit:
       uri: http://172.17.0.1:9097/analysis
+
 # 网页快照
 screenshot:
-  # 图片上传
   uploadUrl: http://172.17.0.1:80/smart-agent-api/wos/file/upload
-  # 8.网页截图
   api: http://172.17.0.1:5028/capture-screenshot
 
-# mcp服务api
+# MCP服务
 mcp:
-  # 4.MCP
   serviceApi: http://172.17.0.1:4011/service
-  # 4.MCP
   queryApi: http://172.17.0.1:4011/query
-  # 5.本地自定义安装 mcp
   buildMcpApi: http://172.17.0.1:4011/deploy_service
-  # 3.智能问数（NL2SQL）
   textToSqlSse: http://172.17.0.1:1025/get_answer_text2sql
 
+# 工作流
 workflow:
   default:
-    # 2.工作流代码节点
     codeApi: http://172.17.0.1:1216/execute
-    # 开始节点的改写时使用的大模型 id（llm_info表的 model_id字段）
     startRewriteModelId: 87026c3464664ad49a8b622ec719fa70
 ```
-### MYSQL配置
-```mysql
--- 1.启动向量模型
-use smart_customer_agent;
-update smart_customer_agent.dense_vector set uri='http://172.17.0.1:10822/analysis' where code = 'local_bge_768';
+
+### MySQL配置
+```sql
+-- 更新向量模型配置
+USE smart_customer_agent;
+UPDATE smart_customer_agent.dense_vector 
+SET uri='http://172.17.0.1:10822/analysis' 
+WHERE code = 'local_bge_768';
 ```
 
-## 技术栈
+## 📋 服务架构
 
-- 前端： vue
--  后端： java
--  算法： python
--  数据库： mysql
-- 中间件：elasticsearch,redis,minio,nginx
+### 主服务容器
+- **agent-x**: 主应用服务，包含Web界面、API服务、数据库、缓存等
 
-### docker-compose.yml
-```yaml
+### 算法服务容器
+- **algorithm-vector**: 向量化模型服务
+- **algorithm-code-node**: 工作流代码执行节点
+- **algorithm-nl2sql**: 自然语言转SQL服务
+- **algorithm-mcp**: MCP协议服务
+- **algorithm-local-mcp**: 本地MCP服务
+- **algorithm-mcp-nl2sql**: MCP SQL查询服务
+- **algorithm-url-analysis**: 网页内容分析
+- **algorithm-url-to-img**: 网页截图服务
+- **algorithm-reranker**: 搜索重排序服务
+- **algorithm-content-parse**: 文档解析服务
+- **algorithm-doc-answer**: 文档切片服务
 
-version: '3.8'
-services:
-  # ========== 主服务：x-agent ==========
-  agent-x:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:agent-x_no_bge_250815_05
-    container_name: agent-x
-    restart: always
-    ports:
-      - "80:80"     # 替换为浏览器将要访问的端口，与IP_ADDR参数的端口一致
-      - "443:443"	# https
-      - "8848:8848" # Nacos
-      - "3306:3306" # MySQL
-      - "6379:6379" # Redis
-      - "9200:9200" # Elasticsearch
-      - "9000:9000" # MinIO
-      - "9001:9001" # MinIO
-    environment:
-      - IP_ADDR=127.0.0.1:80 # 替换为浏览器将要访问的 ip 和端口
-    volumes:
-      - agent-x-data:/u01/isi
-      - agent-x-cicd:/app/agent/server
+## 🎯 快速开始指南
 
-  # ========== 算法服务 ==========
-  # 1. 向量模型
-  algorithm-vector:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-    container_name: algorithm-vector
-    restart: always
-    ports:
-      - "10822:8080"  # 默认端口10822，如果默认端口10822有变动，请修改 mysql 的配置项:use smart_customer_agent; update smart_customer_agent.dense_vector set uri='http://172.17.0.1:10822/analysis' where code = 'local_bge_768';
-    volumes:
-      - ./code_sdk/Embedding_model/config.yml:/app/config.yml
-      - ./code_sdk/Embedding_model/main.py:/app/main.py
+1. **访问管理后台**: http://127.0.0.1:80/wg-agent-manage/#/appmanage
+2. **登录系统**: 使用账号 `agent-x` 和密码 `04p9xa0gAE*%&Op8`
+3. **创建应用**: 通过可视化界面拖拽组件构建AI应用
+4. **配置模型**: 设置知识库、工作流和大模型
+5. **发布测试**: 发布和测试您的AI应用
 
-  # 2. 工作流代码节点
-  algorithm-code-node:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-    container_name: algorithm-code-node
-    restart: always
-    ports:
-      - "1216:8080"  #默认端口1216，如果默认端口1216有变动，请修改 nacos 的配置项: workflow.default.codeApi: http://172.17.0.1:1216/execute
-    volumes:
-      - ./code_sdk/Code_node/main.py:/app/main.py
+## 🔍 故障排除
 
-  # 3. 智能问数（NL2SQL）
-  algorithm-nl2sql:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-    container_name: algorithm-nl2sql
-    restart: always
-    ports:
-      - "1025:8080" #默认端口1025，如果默认端口1025有变动，请修改 nacos 的配置项: mcp.textToSqlSse: http://172.17.0.1:1025/get_answer_text2sql
-    volumes:
-      - ./code_sdk/Nl2sql/config.yaml:/app/config.yaml
-      - ./code_sdk/Nl2sql/main.py:/app/main.py
+### 常见问题
 
-  # 4. MCP
-  algorithm-mcp:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-    container_name: algorithm-mcp
-    restart: always
-    ports:
-      - "4011:8080" #默认端口4011，如果默认端口4011有变动，请修改 nacos 的配置项: mcp.buildMcpApi: http://172.17.0.1:4011/deploy_service
-    volumes:
-      - ./code_sdk/MCP/config.yml:/app/config.yml
-      - ./code_sdk/MCP/main.py:/app/main.py
+1. **服务启动失败**
+   ```bash
+   # 检查Docker状态
+   docker ps -a
+   
+   # 查看服务日志
+   docker-compose logs [服务名]
+   ```
 
-  # 5. 本地自定义 MCP (使用 host 网络)
-  algorithm-local-mcp:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
-    container_name: algorithm-local-mcp
-    restart: always
-    network_mode: host  # 使用宿主机网络
-    volumes:
-      - ./code_sdk/Auto_mcp/config.yml:/app/config.yml
-      - ./code_sdk/Auto_mcp/main.py:/app/main.py
-      - ./code_sdk/Auto_mcp/mcp_file:/app/mcp_file
+2. **端口冲突**
+   ```bash
+   # 检查端口占用
+   netstat -tlnp | grep [端口号]
+   
+   # 修改docker-compose.yml中的端口映射
+   ```
 
-  # 8. 网页截图
-  algorithm-url-to-img:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_chrome_v2
-    container_name: algorithm-url-to-img
-    restart: always
-    ports:
-      - "5028:8080" #默认端口5028，如果默认端口5028有变动，请修改 nacos 的配置项: screenshot.api: http://172.17.0.1:5028/capture-screenshot
-    volumes:
-      - ./code_sdk/URL_to_img/config.yml:/app/config.yml
-      - ./code_sdk/URL_to_img/main.py:/app/main.py
+3. **内存不足**
+   ```bash
+   # 检查系统资源
+   free -h
+   df -h
+   
+   # 清理Docker资源
+   docker system prune -a
+   ```
 
-  # 9. 重排序服务 (yayi)
-  algorithm-reranker:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:reranker.v1
-    container_name: algorithm-reranker
-    restart: always
-    ports:
-      - "9098:8080" #默认端口9098，如果默认端口9098有变动，请修改 nacos 的配置项: appframe.yayi.rearrange.uri: http://172.17.0.0.1:9098/analysis
+4. **配置文件缺失**
+   ```bash
+   # 确保Agent_X.zip存在
+   ls -la Agent_X.zip
+   
+   # 重新解压配置文件
+   unzip -o Agent_X.zip -d ./code_sdk/
+   ```
 
-  # 10. 文档智能解析 (yayi)
-  algorithm-content-parse:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:contentparse.v4.7
-    container_name: algorithm-content-parse
-    restart: always
-    ports:
-      - "9099:8080" #默认端口9099，如果默认端口9099有变动，请修改 nacos 的配置项: appframe.yayi.contentparsingnewversion.uri: http://172.17.0.0.1:9099/analysis
+### 日志查看
+```bash
+# 查看所有服务日志
+docker-compose logs -f
 
-  doc_answer_noes:
-    image: ccr.ccs.tencentyun.com/wenge/agent-x:doc_answer_noes_nosql.v1.2.8-build2503143-encrypted
-    container_name: doc_answer_noes
-    restart: always
-    ports:
-      - "9097:8080" #默认端口9097，如果默认端口9097有变动，请修改 nacos 的配置项: appframe.yayi.knowledgesplit.uri: http://172.17.0.0.1:9097/analysis
+# 查看特定服务日志
+docker-compose logs -f agent-x
+docker-compose logs -f algorithm-vector
 
-# ========== 数据卷定义 ==========
-volumes:
-  agent-x-data:
-    external: true  # 对应你之前创建的 docker volume create agent-x-data
-  agent-x-cicd:
-    external: true  # 对应你之前创建的 docker volume create agent-x-cicd
-
+# 查看实时日志
+docker logs -f [容器名]
 ```
 
+## 📞 技术支持
 
-### 相关脚本
-```shell
-# 启动所有服务
-docker-compose up -d
-# 查看运行状态
-docker-compose ps
-# 查看日志
-docker-compose logs -f [服务名]
-```
+如遇到问题，请：
+1. 查看服务日志定位问题
+2. 检查系统资源是否充足
+3. 确认网络连接正常
+4. 验证配置文件完整性
 
-## 联系工作人员
-<img src="./worker.png" alt="图片描述" width="200" />
+## 📄 许可证
+
+本项目遵循相应的开源许可证，具体请查看LICENSE文件。
+
+---
+
+**智川X-Agent** - 让AI应用开发更简单，让企业数字化转型更高效！
+
