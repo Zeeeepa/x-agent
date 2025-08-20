@@ -119,6 +119,72 @@ cleanup_docker_resources() {
     print_success "Docker resources cleaned up successfully."
 }
 
+# Function to deploy containers manually if docker-compose fails
+deploy_containers_manually() {
+    print_status "Attempting to deploy containers manually..."
+    
+    # Create volumes if they don't exist
+    print_status "Creating Docker volumes..."
+    docker volume create agent-x-data >/dev/null
+    docker volume create agent-x-cicd >/dev/null
+    
+    # Run the main container
+    print_status "Starting main container: agent-x..."
+    if docker run -d --restart=always \
+        -p 80:80 -p 443:443 -p 8848:8848 -p 3306:3306 \
+        -p 6379:6379 -p 9200:9200 -p 9000:9000 -p 9001:9001 \
+        -e IP_ADDR="127.0.0.1:80" \
+        -v agent-x-data:/u01/isi \
+        -v agent-x-cicd:/app/agent/server \
+        --name agent-x \
+        ccr.ccs.tencentyun.com/wenge/agent-x:agent-x_no_bge_250815_05; then
+        print_success "Main container started successfully."
+    else
+        print_error "Failed to start main container."
+        return 1
+    fi
+    
+    # Run the algorithm-vector container
+    print_status "Starting container: algorithm-vector..."
+    if docker run -d --restart=always \
+        -p 10822:8080 \
+        -v "$WORK_DIR/code_sdk/Embedding_model/config.yml:/app/config.yml" \
+        -v "$WORK_DIR/code_sdk/Embedding_model/main.py:/app/main.py" \
+        --name algorithm-vector \
+        ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2; then
+        print_success "algorithm-vector container started successfully."
+    else
+        print_warning "Failed to start algorithm-vector container."
+    fi
+    
+    # Run the algorithm-code-node container
+    print_status "Starting container: algorithm-code-node..."
+    if docker run -d --restart=always \
+        -p 1216:8080 \
+        -v "$WORK_DIR/code_sdk/Code_node/main.py:/app/main.py" \
+        --name algorithm-code-node \
+        ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2; then
+        print_success "algorithm-code-node container started successfully."
+    else
+        print_warning "Failed to start algorithm-code-node container."
+    fi
+    
+    # Run the algorithm-nl2sql container
+    print_status "Starting container: algorithm-nl2sql..."
+    if docker run -d --restart=always \
+        -p 1025:8080 \
+        -v "$WORK_DIR/code_sdk/Nl2sql/config.yaml:/app/config.yml" \
+        -v "$WORK_DIR/code_sdk/Nl2sql/main.py:/app/main.py" \
+        --name algorithm-nl2sql \
+        ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2; then
+        print_success "algorithm-nl2sql container started successfully."
+    else
+        print_warning "Failed to start algorithm-nl2sql container."
+    fi
+    
+    return 0
+}
+
 # Check if script is run with sudo or as root
 if ! is_root; then
     print_warning "This script requires elevated privileges to install dependencies and configure services."
@@ -288,31 +354,37 @@ fi
 
 # Pull Docker images
 print_status "Pulling Docker images (this may take a while)..."
-if docker compose pull; then
-    print_success "Docker images pulled successfully."
-else
-    print_error "Failed to pull Docker images. Please check your network connection and registry access."
-    exit 1
-fi
+docker pull ccr.ccs.tencentyun.com/wenge/agent-x:agent-x_no_bge_250815_05
+docker pull ccr.ccs.tencentyun.com/wenge/agent-x:algorithm_v2
+print_success "Docker images pulled successfully."
 
-# Start containers
-print_status "Starting containers..."
+# Try to start containers using docker-compose
+print_status "Starting containers using docker-compose..."
 if docker compose up -d; then
-    print_success "Containers started successfully."
+    print_success "Containers started successfully with docker-compose."
 else
-    print_error "Failed to start containers. Please check the logs for more information."
-    exit 1
+    print_warning "Failed to start containers with docker-compose. Trying manual deployment..."
+    
+    # Try manual deployment
+    if deploy_containers_manually; then
+        print_success "Containers started successfully with manual deployment."
+    else
+        print_error "Failed to deploy containers. Please check the logs for more information."
+        exit 1
+    fi
 fi
 
 # Check container status
 print_status "Checking container status..."
 sleep 10  # Give containers some time to start
-if docker compose ps | grep -q "Exit\|exited"; then
-    print_error "Some containers have exited. Please check the logs for more information."
-    docker compose logs
+
+# Check if the main container is running
+if ! docker ps | grep -q "agent-x"; then
+    print_error "Main container is not running. Please check the logs for more information."
+    docker logs agent-x
     exit 1
 else
-    print_success "All containers are running."
+    print_success "Main container is running."
 fi
 
 # Get server IP
@@ -335,14 +407,23 @@ echo -e "  MinIO: ${BOLD}$SERVER_IP:9000${RESET} (Console: ${BOLD}$SERVER_IP:900
 echo -e "  Nacos: ${BOLD}$SERVER_IP:8848${RESET}"
 
 echo -e "\n${BOLD}Useful Commands:${RESET}"
-echo -e "  View container status: ${BOLD}docker compose ps${RESET}"
-echo -e "  View logs: ${BOLD}docker compose logs -f [service_name]${RESET}"
-echo -e "  Stop containers: ${BOLD}docker compose stop${RESET}"
-echo -e "  Start containers: ${BOLD}docker compose start${RESET}"
-echo -e "  Remove containers: ${BOLD}docker compose down${RESET}"
+echo -e "  View container status: ${BOLD}docker ps${RESET}"
+echo -e "  View logs: ${BOLD}docker logs [container_name]${RESET}"
+echo -e "  Stop containers: ${BOLD}docker stop agent-x algorithm-vector algorithm-code-node algorithm-nl2sql${RESET}"
+echo -e "  Start containers: ${BOLD}docker start agent-x algorithm-vector algorithm-code-node algorithm-nl2sql${RESET}"
+echo -e "  Remove containers: ${BOLD}docker rm -f agent-x algorithm-vector algorithm-code-node algorithm-nl2sql${RESET}"
+
+echo -e "\n${BOLD}Troubleshooting:${RESET}"
+echo -e "  If you encounter a 502 error when accessing the web UI, try the following:"
+echo -e "  1. Check if the main container is running: ${BOLD}docker ps | grep agent-x${RESET}"
+echo -e "  2. View the logs: ${BOLD}docker logs agent-x${RESET}"
+echo -e "  3. Restart the container: ${BOLD}docker restart agent-x${RESET}"
+echo -e "  4. Wait a few minutes for all services to initialize properly"
 
 echo -e "\n${BOLD}Note:${RESET} If you're accessing the web UI from a different machine,"
-echo -e "      you may need to update the IP_ADDR environment variable in docker-compose.yml."
+echo -e "      you may need to update the IP_ADDR environment variable:"
+echo -e "      ${BOLD}docker stop agent-x && docker rm agent-x${RESET}"
+echo -e "      ${BOLD}docker run -d --restart=always -p 80:80 -p 443:443 -p 8848:8848 -p 3306:3306 -p 6379:6379 -p 9200:9200 -p 9000:9000 -p 9001:9001 -e IP_ADDR=\"YOUR_IP:80\" -v agent-x-data:/u01/isi -v agent-x-cicd:/app/agent/server --name agent-x ccr.ccs.tencentyun.com/wenge/agent-x:agent-x_no_bge_250815_05${RESET}"
 
 exit 0
 
