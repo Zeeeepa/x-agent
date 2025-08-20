@@ -46,7 +46,12 @@ check_docker() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
+    # 检查 docker compose 命令是否可用
+    if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+        print_info "Docker Compose 插件模式可用"
+    elif command -v docker-compose &> /dev/null; then
+        print_info "Docker Compose 独立模式可用"
+    else
         print_error "Docker Compose 未安装，请先安装 Docker Compose"
         exit 1
     fi
@@ -63,7 +68,7 @@ setup_volumes() {
     docker volume create agent-x-cicd 2>/dev/null || true
     
     # 创建配置文件目录
-    mkdir -p ./code_sdk/{Embedding_model,Code_node,Nl2sql,MCP,Auto_mcp/mcp_file,URL_analysis,URL_to_img}
+    mkdir -p ./code_sdk/{Embedding_model,Code_node,Nl2sql,MCP,Auto_mcp/mcp_file,URL_analysis,URL_to_img,mcp_sql}
     
     print_success "数据卷和目录创建完成"
 }
@@ -292,9 +297,15 @@ EOF
 start_services() {
     print_info "启动所有服务..."
     
+    # 检测 docker-compose 命令
+    DOCKER_COMPOSE_CMD="docker-compose"
+    if ! command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    fi
+    
     # 启动主服务
     print_info "启动主服务 agent-x..."
-    docker-compose up -d agent-x
+    $DOCKER_COMPOSE_CMD up -d agent-x
     
     # 等待主服务启动
     print_info "等待主服务启动完成..."
@@ -302,7 +313,7 @@ start_services() {
     
     # 启动算法服务
     print_info "启动算法服务..."
-    docker-compose up -d
+    $DOCKER_COMPOSE_CMD up -d
     
     print_success "所有服务启动完成"
 }
@@ -310,6 +321,12 @@ start_services() {
 # 等待服务就绪
 wait_for_services() {
     print_info "等待服务就绪..."
+    
+    # 检测 docker-compose 命令
+    DOCKER_COMPOSE_CMD="docker-compose"
+    if ! command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    fi
     
     local services=(
         "agent-x:80"
@@ -429,11 +446,11 @@ show_access_info() {
     echo ""
     
     echo -e "${CYAN}🛠️ 常用管理命令:${NC}"
-    echo -e "   查看服务状态: ${YELLOW}docker-compose ps${NC}"
-    echo -e "   查看服务日志: ${YELLOW}docker-compose logs -f [服务名]${NC}"
-    echo -e "   重启所有服务: ${YELLOW}docker-compose restart${NC}"
-    echo -e "   停止所有服务: ${YELLOW}docker-compose down${NC}"
-    echo -e "   更新服务: ${YELLOW}docker-compose pull && docker-compose up -d${NC}"
+    echo -e "   查看服务状态: ${YELLOW}./status.sh${NC}"
+    echo -e "   查看服务日志: ${YELLOW}./logs.sh [服务名]${NC}"
+    echo -e "   重启所有服务: ${YELLOW}./restart.sh${NC}"
+    echo -e "   停止所有服务: ${YELLOW}./stop.sh${NC}"
+    echo -e "   启动所有服务: ${YELLOW}./start.sh${NC}"
     echo ""
     
     echo -e "${GREEN}========================================${NC}"
@@ -453,8 +470,14 @@ show_access_info() {
 check_services() {
     print_info "检查服务运行状态..."
     
+    # 检测 docker-compose 命令
+    DOCKER_COMPOSE_CMD="docker-compose"
+    if ! command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    fi
+    
     echo -e "${CYAN}服务运行状态:${NC}"
-    docker-compose ps
+    $DOCKER_COMPOSE_CMD ps
     
     echo ""
     echo -e "${CYAN}容器资源使用情况:${NC}"
@@ -465,49 +488,55 @@ check_services() {
 create_management_scripts() {
     print_info "创建管理脚本..."
     
+    # 检测 docker-compose 命令
+    DOCKER_COMPOSE_CMD="docker-compose"
+    if ! command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    fi
+    
     # 创建启动脚本
-    cat > start.sh << 'EOF'
+    cat > start.sh << EOF
 #!/bin/bash
 echo "启动智川X-Agent服务..."
-docker-compose up -d
+$DOCKER_COMPOSE_CMD up -d
 echo "服务启动完成！"
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 EOF
     
     # 创建停止脚本
-    cat > stop.sh << 'EOF'
+    cat > stop.sh << EOF
 #!/bin/bash
 echo "停止智川X-Agent服务..."
-docker-compose down
+$DOCKER_COMPOSE_CMD down
 echo "服务已停止！"
 EOF
     
     # 创建重启脚本
-    cat > restart.sh << 'EOF'
+    cat > restart.sh << EOF
 #!/bin/bash
 echo "重启智川X-Agent服务..."
-docker-compose restart
+$DOCKER_COMPOSE_CMD restart
 echo "服务重启完成！"
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 EOF
     
     # 创建日志查看脚本
-    cat > logs.sh << 'EOF'
+    cat > logs.sh << EOF
 #!/bin/bash
-if [ -z "$1" ]; then
+if [ -z "\$1" ]; then
     echo "查看所有服务日志..."
-    docker-compose logs -f
+    $DOCKER_COMPOSE_CMD logs -f
 else
-    echo "查看 $1 服务日志..."
-    docker-compose logs -f "$1"
+    echo "查看 \$1 服务日志..."
+    $DOCKER_COMPOSE_CMD logs -f "\$1"
 fi
 EOF
     
     # 创建状态检查脚本
-    cat > status.sh << 'EOF'
+    cat > status.sh << EOF
 #!/bin/bash
 echo "=== 服务运行状态 ==="
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 echo ""
 echo "=== 资源使用情况 ==="
 docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
@@ -564,4 +593,3 @@ main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
-
